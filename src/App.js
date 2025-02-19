@@ -1,8 +1,14 @@
+import GlobalStyles from "./styles/global";
+import React from "react";
+
+import AppRoutes from "./routes";
+
 function App() {
   return (
-    <div className="App">
-      <h1>Teste</h1>
-    </div>
+    <>
+      <GlobalStyles />
+      <AppRoutes />
+    </>
   );
 }
 
