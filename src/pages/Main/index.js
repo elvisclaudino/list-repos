@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { FaGithub, FaPlus, FaSpinner, FaBars, FaTrash } from "react-icons/fa";
 
 import { Container } from "./styles";
@@ -13,9 +13,25 @@ export default function Main() {
   const [newRepo, setNewRepo] = useState("");
   const [repositories, setRepositores] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [alert, setAlert] = useState(null);
+
+  // DisMount - Search
+  useEffect(() => {
+    const repoStorage = localStorage.getItem("repos");
+
+    if (repoStorage) {
+      setRepositores(JSON.parse(repoStorage));
+    }
+  }, []);
+
+  // DifUpdate - Save
+  useEffect(() => {
+    localStorage.setItem("repos", JSON.stringify(repositories));
+  }, [repositories]);
 
   function handleInputChange(e) {
     setNewRepo(e.target.value);
+    setAlert(null);
   }
 
   const handleDelete = useCallback(
@@ -32,9 +48,20 @@ export default function Main() {
 
       async function submit() {
         setLoading(true);
+        setAlert(null);
 
         try {
+          if (newRepo === "") {
+            throw new Error("You need to inform a repository");
+          }
+
           const response = await api.get(`repos/${newRepo}`);
+
+          const hasRepo = repositories.find((repo) => repo.name === newRepo);
+
+          if (hasRepo) {
+            throw new Error("Duplicated repository");
+          }
 
           const data = {
             name: response.data.full_name,
@@ -43,6 +70,7 @@ export default function Main() {
           setRepositores([...repositories, data]);
           setNewRepo("");
         } catch (error) {
+          setAlert(true);
           console.log(error);
         } finally {
           setLoading(false);
@@ -61,7 +89,7 @@ export default function Main() {
         My Repositories
       </h1>
 
-      <Form onSubmit={handleSubmit}>
+      <Form onSubmit={handleSubmit} error={alert}>
         <input
           type="text"
           placeholder="Add Repositories"
@@ -69,7 +97,7 @@ export default function Main() {
           onChange={handleInputChange}
         />
 
-        <SubmitButton Loading={loading ? 1 : 0}>
+        <SubmitButton loading={loading ? 1 : 0}>
           {loading ? (
             <FaSpinner color="#fff" size={14} />
           ) : (
