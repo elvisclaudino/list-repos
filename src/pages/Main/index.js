@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { FaGithub, FaPlus, FaSpinner, FaBars, FaTrash } from "react-icons/fa";
 
 import { Container } from "./styles";
@@ -115,9 +116,9 @@ export default function Main() {
               </DeleteButton>
               {repo.name}
             </span>
-            <a href="#">
+            <Link to={`/repository/${encodeURIComponent(repo.name)}`}>
               <FaBars size={20} />
-            </a>
+            </Link>
           </li>
         ))}
       </List>
