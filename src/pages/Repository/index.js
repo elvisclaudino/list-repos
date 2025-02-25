@@ -6,6 +6,7 @@ import { Owner } from "./styles";
 import { Loading } from "./styles";
 import { BackButton } from "./styles";
 import { IssuesList } from "./styles";
+import { PageActions } from "./styles";
 
 import api from "../../services/api";
 import { FaArrowLeft } from "react-icons/fa";
@@ -16,6 +17,7 @@ export default function Repository({ match }) {
   const [repositoryData, setRepositoryData] = useState({});
   const [issues, setIssues] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
     async function load() {
@@ -37,8 +39,32 @@ export default function Repository({ match }) {
     load();
   }, [repository]);
 
+  useEffect(() => {
+    async function loadIssue() {
+      const response = await api.get(`/repos/${repository}/issues`, {
+        params: {
+          state: "open",
+          page,
+          per_page: 5,
+        },
+      });
+
+      setIssues(response.data);
+    }
+
+    loadIssue();
+  }, [repository, page]);
+
+  function handlePage(action) {
+    setPage(action === "back" ? page - 1 : page + 1);
+  }
+
   if (loading) {
-    return <Loading>Carregando...</Loading>;
+    return (
+      <Loading>
+        <h1>Carregando...</h1>
+      </Loading>
+    );
   }
 
   return (
@@ -74,6 +100,19 @@ export default function Repository({ match }) {
           </li>
         ))}
       </IssuesList>
+
+      <PageActions>
+        <button
+          type="button"
+          onClick={() => handlePage("back")}
+          disabled={page === 1}
+        >
+          Voltar
+        </button>
+        <button type="button" onClick={() => handlePage("next")}>
+          Próxima
+        </button>
+      </PageActions>
     </Container>
   );
 }
