@@ -7,6 +7,7 @@ import { Loading } from "./styles";
 import { BackButton } from "./styles";
 import { IssuesList } from "./styles";
 import { PageActions } from "./styles";
+import { FilterList } from "./styles";
 
 import api from "../../services/api";
 import { FaArrowLeft } from "react-icons/fa";
@@ -18,6 +19,12 @@ export default function Repository({ match }) {
   const [issues, setIssues] = useState([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
+  const [filters] = useState([
+    { state: "all", label: "All", active: true },
+    { state: "open", label: "Open", active: false },
+    { state: "closed", label: "Closed", active: false },
+  ]);
+  const [filterIndex, setFilterIndex] = useState(0);
 
   useEffect(() => {
     async function load() {
@@ -25,7 +32,7 @@ export default function Repository({ match }) {
         api.get(`/repos/${repository}`),
         api.get(`/repos/${repository}/issues`, {
           params: {
-            state: "open",
+            state: filters.find((f) => f.active).state,
             per_page: 5,
           },
         }),
@@ -37,13 +44,13 @@ export default function Repository({ match }) {
     }
 
     load();
-  }, [repository]);
+  }, [repository, filters]);
 
   useEffect(() => {
     async function loadIssue() {
       const response = await api.get(`/repos/${repository}/issues`, {
         params: {
-          state: "open",
+          state: filters[filterIndex].state,
           page,
           per_page: 5,
         },
@@ -53,10 +60,14 @@ export default function Repository({ match }) {
     }
 
     loadIssue();
-  }, [repository, page]);
+  }, [repository, page, filters, filterIndex]);
 
   function handlePage(action) {
     setPage(action === "back" ? page - 1 : page + 1);
+  }
+
+  function handleFilter(index) {
+    setFilterIndex(index);
   }
 
   if (loading) {
@@ -81,6 +92,18 @@ export default function Repository({ match }) {
         <h1>{repositoryData.name}</h1>
         <p>{repositoryData.description}</p>
       </Owner>
+
+      <FilterList active={filterIndex}>
+        {filters.map((filter, index) => (
+          <button
+            type="button"
+            key={filter.label}
+            onClick={() => handleFilter(index)}
+          >
+            {filter.label}
+          </button>
+        ))}
+      </FilterList>
 
       <IssuesList>
         {issues.map((issue) => (
@@ -107,10 +130,10 @@ export default function Repository({ match }) {
           onClick={() => handlePage("back")}
           disabled={page === 1}
         >
-          Voltar
+          Back
         </button>
         <button type="button" onClick={() => handlePage("next")}>
-          Próxima
+          Next
         </button>
       </PageActions>
     </Container>
